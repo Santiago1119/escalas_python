@@ -23,42 +23,46 @@ def get_answers(id_user:int)->json:
         """
         
         response_options = {
-            0: 'Ningun dia',
-            1: 'Varios dias',
-            2: 'Mas de la mitad de los dias',
-            3: 'Casi todos los dias'
-        }
-
-        return {i+1: response_options[answers[i]] for i in range(9)}
+            1: 'Desacuerdo fuertemente',
+            2: 'No estoy de acuerdo',
+            3: 'Algo en desacuerdo',
+            4: 'Neutral',
+            5: 'Un poco de acuerdo',
+            6: 'De acuerdo',
+            7: 'Estoy muy de acuerdo'
+        } 
+        
+        return {i+1: response_options[answers[i]] for i in range(19)}
                 
     with connection_db().cursor() as cursor:
 
-        sql = (f"SELECT answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, id_answers, user_id FROM answers_phq9 WHERE user_id = %s")  
-        value = (id_user,)
+        sql = (f"SELECT answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, answer_11, answer_12, answer_13, answer_14, answer_15, answer_16, answer_17, answer_18, answer_19, id_answers, user_id FROM answers_motivation_treatment WHERE user_id = %s")
+        values = (id_user,)
         
-        cursor.execute(sql, value)
+        cursor.execute(sql, values)
         answers = cursor.fetchone()
         
-        dictionary_return = question_value(list(answers))
-        dictionary_return['info_user'] = {'user_id': list(answers)[-1],  'id_answers': list(answers)[-2]}
+        user_id = list(answers)[-1]
+        id_answers = list(answers)[-2]
         
-        sql2 = (f"SELECT result FROM result_phq9 WHERE answers_id = %s")
-        values2 = (list(answers)[-2],)
+        dictionary_return = question_value(list(answers))
+        dictionary_return['info_user'] = {'user_id': user_id,  'id_answers': id_answers}
+        
+        sql2 = (f"SELECT result FROM result_motivation_treatment WHERE answers_id = %s")
+        values2 = (id_answers,)
         
         cursor.execute(sql2, values2)
         result = cursor.fetchone()
         
-        total_score = int(result[0])
-        intervention_alert = False
-        
-        if total_score >= 10:
+        total_score = int(result[0])        
+        if total_score >= 68:
             intervention_alert = True
         
         dictionary_return['intervention_alert'] = intervention_alert
         
         return json.dumps(dictionary_return)
 
-print(get_answers(5))
+# print(get_answers(1))
     
 def register_phq9(info_user:json)->json:
     """Ingresa en la base de datos la información ingresada en formato json con dos query(SQL) para dos tablas distintas, una almacena el resultado y la otra almacena las respuestas del usuario
@@ -95,29 +99,35 @@ def register_phq9(info_user:json)->json:
             answer_7 = args['answer_7']
             answer_8 = args['answer_8']
             answer_9 = args['answer_9']
+            answer_10 = args['answer_9']
+            answer_11 = args['answer_9']
+            answer_12 = args['answer_9']
+            answer_13 = args['answer_9']
+            answer_14 = args['answer_9']
+            answer_15 = args['answer_9']
+            answer_16 = args['answer_9']
+            answer_17 = args['answer_9']
+            answer_18 = args['answer_9']
+            answer_19 = args['answer_9']
+
                 
                 
-            answers = [answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9]
+            answers = [answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, answer_11, answer_12, answer_13, answer_14, answer_15, answer_16, answer_17, answer_18, answer_19]
             total_score = sum(answers)
-            
-            intervention_alert = False
-            
-            if total_score >= 10:
-                intervention_alert = True
+                
                 
             try:
-                sql = f"INSERT INTO answers_phq9 (answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, user_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-                values = (answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, user_id)
+                sql = f"INSERT INTO answers_motivation_treatment (answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, answer_11, answer_12, answer_13, answer_14, answer_15, answer_16, answer_17, answer_18, answer_19  user_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+                values = (answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, answer_11, answer_12, answer_13, answer_14, answer_15, answer_16, answer_17, answer_18, answer_19, user_id)
                     
                 cursor.execute(sql, values)
-                answers_phq9_id = cursor.lastrowid
                 
-                sql2 = f"INSERT INTO result_phq9 (result, user_id, answers_id) VALUES (%s, %s, %s)"
-                values_2 = (total_score, user_id, answers_phq9_id)
+                sql2 = f"INSERT INTO result_motivation_treatment (result, user_id) VALUES (%s, %s)"
+                values_2 = (total_score, user_id)
                 
-                cursor.execute(sql2, values_2) 
+                cursor.execute(sql2, values_2)
+                
                 conn.commit()
-                
                     
                 return json.dumps({
                     "id_user": user_id,
@@ -130,17 +140,27 @@ def register_phq9(info_user:json)->json:
                     "answer_7": answer_7,
                     "answer_8": answer_8,
                     "answer_9": answer_9,
-                    "result_test": total_score,
-                    "intervention_alert": intervention_alert
+                    "answer_10": answer_10,
+                    "answer_11": answer_11,
+                    "answer_12": answer_12,
+                    "answer_13": answer_13,
+                    "answer_14": answer_14,
+                    "answer_15": answer_15,
+                    "answer_16": answer_16,
+                    "answer_17": answer_17,
+                    "answer_18": answer_18,
+                    "answer_19": answer_19,
+                    "result_test": total_score
                 })
             except:
                 return json.dumps({
                     "message": "Error al insertar datos en la base de datos"
                 })
         
-
-# parametros register_phq9()
-"""dictionary = {"user_id": 5,
+        
+"""
+parametros register_phq9()
+dictionary = {"user_id": 5,
         "answer_1": 1,
         "answer_2": 3,
         "answer_3": 2,
@@ -221,12 +241,3 @@ def delete_one_phq9(info_user:json)->json:
                 return json.dumps({
                     "message": "No se pudieron eliminar los registros y resultados de la escala PHQ9"
                 })
-
-"""
-parametros delete_one_phq9()
-
-parameters_delete_one_phq9 = {'user_id': 5,
-                                'id_answers': 20,
-                                'id_result': 3}
-
-print(delete_one_phq9(json.dumps(parameters_delete_one_phq9)))"""
