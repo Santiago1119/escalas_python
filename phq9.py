@@ -33,32 +33,35 @@ def get_answers(id_user:int)->json:
                 
     with connection_db().cursor() as cursor:
 
-        sql = (f"SELECT answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, id_answers, user_id FROM answers_phq9 WHERE user_id = %s")  
-        value = (id_user,)
-        
-        cursor.execute(sql, value)
-        answers = cursor.fetchone()
-        
-        dictionary_return = question_value(list(answers))
-        dictionary_return['info_user'] = {'user_id': list(answers)[-1],  'id_answers': list(answers)[-2]}
-        
-        sql2 = (f"SELECT result FROM result_phq9 WHERE answers_id = %s")
-        values2 = (list(answers)[-2],)
-        
-        cursor.execute(sql2, values2)
-        result = cursor.fetchone()
-        
-        total_score = int(result[0])
-        intervention_alert = False
-        
-        if total_score >= 10:
-            intervention_alert = True
-        
-        dictionary_return['intervention_alert'] = intervention_alert
-        
-        return json.dumps(dictionary_return)
+        try:
+            sql = (f"SELECT answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, id_answers, user_id FROM answers_phq9 WHERE user_id = %s")  
+            value = (id_user,)
+            
+            cursor.execute(sql, value)
+            answers = cursor.fetchone()
+            
+            dictionary_return = question_value(list(answers))
+            dictionary_return['info_user'] = {'user_id': list(answers)[-1],  'id_answers': list(answers)[-2]}
+            
+            sql_2 = (f"SELECT result FROM result_phq9 WHERE answers_id = %s")
+            values2 = (list(answers)[-2],)
+            
+            cursor.execute(sql_2, values2)
+            result = cursor.fetchone()
+            
+            total_score = int(result[0])
+            intervention_alert = False
+            
+            if total_score >= 10:
+                intervention_alert = True
+            
+            dictionary_return['intervention_alert'] = intervention_alert
+            
+            return json.dumps(dictionary_return)
+        except Exception as e:
+            return json.dumps({'message': f'Error al guardar los datos: {e}'})
 
-print(get_answers(5))
+# print(get_answers(5))
     
 def register_phq9(info_user:json)->json:
     """Ingresa en la base de datos la información ingresada en formato json con dos query(SQL) para dos tablas distintas, una almacena el resultado y la otra almacena las respuestas del usuario
@@ -112,10 +115,10 @@ def register_phq9(info_user:json)->json:
                 cursor.execute(sql, values)
                 answers_phq9_id = cursor.lastrowid
                 
-                sql2 = f"INSERT INTO result_phq9 (result, user_id, answers_id) VALUES (%s, %s, %s)"
+                sql_2 = f"INSERT INTO result_phq9 (result, user_id, answers_id) VALUES (%s, %s, %s)"
                 values_2 = (total_score, user_id, answers_phq9_id)
                 
-                cursor.execute(sql2, values_2) 
+                cursor.execute(sql_2, values_2) 
                 conn.commit()
                 
                     
@@ -133,14 +136,14 @@ def register_phq9(info_user:json)->json:
                     "result_test": total_score,
                     "intervention_alert": intervention_alert
                 })
-            except:
+            except Exception as e:
                 return json.dumps({
-                    "message": "Error al insertar datos en la base de datos"
+                    "message": f"Error al insertar datos en la base de datos: {e}"
                 })
         
-
+"""
 # parametros register_phq9()
-"""dictionary = {"user_id": 5,
+dictionary = {"user_id": 5,
         "answer_1": 1,
         "answer_2": 3,
         "answer_3": 2,
@@ -167,28 +170,28 @@ def delete_all_phq9(id_user:int)->json:
         with conn.cursor() as cursor:
     
             try:
-                sql = f"DELETE FROM answers_phq9 WHERE user_id = %s"
+                sql = f"DELETE FROM result_phq9 WHERE user_id = %s"
                 values = (id_user,)
                     
                 cursor.execute(sql, values)
                 
-                sql2 = f"DELETE FROM result_phq9 WHERE user_id = %s"
+                sql_2 = f"DELETE FROM answers_phq9 WHERE user_id = %s"
                 values_2 = (id_user,)
                 
-                cursor.execute(sql2, values_2)
+                cursor.execute(sql_2, values_2)
                 
                 conn.commit()
                     
                 return json.dumps({
                     "se eliminaron las respuestas del usuario": id_user
                 })
-            except:
+            except Exception as e:
                 return json.dumps({
-                    "message": "Error al eliminar datos en la base de datos"
+                    "message": f"Error al eliminar datos en la base de datos: {e}"
                 })
 
 
-# print(delete_all_phq9(3))
+# print(delete_all_phq9(5))
 
 
 def delete_one_phq9(info_user:json)->json:
@@ -201,32 +204,32 @@ def delete_one_phq9(info_user:json)->json:
             id_result = args['id_result']
             
             try: 
-                sql = f"DELETE FROM answers_phq9 WHERE user_id = %s AND id_answers = %s"
-                values = (id_user,id_answers)
+                sql = f"DELETE FROM result_phq9 WHERE user_id = %s AND id_result = %s"
+                values = (id_user,id_result)
                     
                 cursor.execute(sql, values)
                 
-                sql2 = f"DELETE FROM result_phq9 WHERE user_id = %s AND id_result = %s"
-                values_2 = (id_user, id_result)
+                sql_2 = f"DELETE FROM answers_phq9 WHERE user_id = %s AND id_answers = %s"
+                values_2 = (id_user, id_answers)
                 
-                cursor.execute(sql2, values_2)
+                cursor.execute(sql_2, values_2)
                 
                 conn.commit()
                 
                 return json.dumps({
-                    "message": "se eliminaron correctamente los registros y resultados de la escala PHQ9"
+                    "message": f"se eliminaron correctamente los registros y resultados de la escala PHQ9 del usuario {id_user}"
                 })
             
-            except:
+            except Exception as e:
                 return json.dumps({
-                    "message": "No se pudieron eliminar los registros y resultados de la escala PHQ9"
+                    "message": f"No se pudieron eliminar los registros y resultados de la escala PHQ9: {e}"
                 })
 
 """
-parametros delete_one_phq9()
+# parametros delete_one_phq9()
 
 parameters_delete_one_phq9 = {'user_id': 5,
-                                'id_answers': 20,
-                                'id_result': 3}
+                                'id_answers': 33,
+                                'id_result': 7}
 
 print(delete_one_phq9(json.dumps(parameters_delete_one_phq9)))"""
