@@ -53,8 +53,8 @@ def get_answers(id_user:int)->json:
             cursor.execute(sql, values)
             answers = cursor.fetchone()
             
-            user_id = list(answers)[-1]
-            id_answers = list(answers)[-2]
+            user_id = answers[-1]
+            id_answers = answers[-2]
             
             dictionary_return = question_value(list(answers))
             dictionary_return['info_user'] = {'user_id': user_id,  'id_answers': id_answers}
@@ -78,9 +78,9 @@ def get_answers(id_user:int)->json:
         except Exception as e:
             return json.dumps({'message': f'Error al consultar los datos: {e}'})
 
-# print(get_answers(1))
+print(get_answers(1))
     
-def register_motivation_treatment(info_user:json)->json:
+def register_rosenberg(info_user:json)->json:
     """Ingresa en la base de datos la información ingresada en formato json con dos query(SQL) para dos tablas distintas, una almacena el resultado y la otra almacena las respuestas del usuario
 
     Args:
@@ -96,16 +96,8 @@ def register_motivation_treatment(info_user:json)->json:
         "answer_7": 2,
         "answer_8": 1,
         "answer_9": 7,
-        "answer_10": 5,
-        "answer_11": 1,
-        "answer_12": 2,
-        "answer_13": 3,
-        "answer_14": 1,
-        "answer_15": 1,
-        "answer_16": 1,
-        "answer_17": 4,
-        "answer_18": 6,
-        "answer_19": 1}
+        "answer_10": 5
+        }
         
 
     Returns:
@@ -126,33 +118,24 @@ def register_motivation_treatment(info_user:json)->json:
             answer_8 = args['answer_8']
             answer_9 = args['answer_9']
             answer_10 = args['answer_10']
-            answer_11 = args['answer_11']
-            answer_12 = args['answer_12']
-            answer_13 = args['answer_13']
-            answer_14 = args['answer_14']
-            answer_15 = args['answer_15']
-            answer_16 = args['answer_16']
-            answer_17 = args['answer_17']
-            answer_18 = args['answer_18']
-            answer_19 = args['answer_19']
 
                 
-            answers = [answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, answer_11, answer_12, answer_13, answer_14, answer_15, answer_16, answer_17, answer_18, answer_19]
+            answers = [answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10]
             total_score = sum(answers)
                 
             intervention_alert = False
             
-            if total_score >= 10:
+            if total_score <= 30:
                 intervention_alert = True
                 
             try:
-                sql = f"INSERT INTO answers_motivation_treatment (answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, answer_11, answer_12, answer_13, answer_14, answer_15, answer_16, answer_17, answer_18, answer_19, user_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-                values = (answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, answer_11, answer_12, answer_13, answer_14, answer_15, answer_16, answer_17, answer_18, answer_19, user_id)
+                sql = f"INSERT INTO answers_rosenberg (answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, user_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+                values = (answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, user_id)
                     
                 cursor.execute(sql, values)
                 answers_id = cursor.lastrowid
                 
-                sql2 = f"INSERT INTO result_motivation_treatment (result, user_id, answers_id) VALUES (%s, %s, %s)"
+                sql2 = f"INSERT INTO result_rosenberg (result, user_id, answers_id) VALUES (%s, %s, %s)"
                 values_2 = (total_score, user_id, answers_id)
                 
                 cursor.execute(sql2, values_2)
@@ -171,15 +154,6 @@ def register_motivation_treatment(info_user:json)->json:
                     "answer_8": answer_8,
                     "answer_9": answer_9,
                     "answer_10": answer_10,
-                    "answer_11": answer_11,
-                    "answer_12": answer_12,
-                    "answer_13": answer_13,
-                    "answer_14": answer_14,
-                    "answer_15": answer_15,
-                    "answer_16": answer_16,
-                    "answer_17": answer_17,
-                    "answer_18": answer_18,
-                    "answer_19": answer_19,
                     "result_test": total_score,
                     "intervention_alert": intervention_alert
                 })
@@ -190,7 +164,7 @@ def register_motivation_treatment(info_user:json)->json:
         
         
 """
-# parametros register_phq9()
+# parametros register_rosenberg()
 dictionary = {"user_id": 1,
         "answer_1": 1,
         "answer_2": 3,
@@ -200,16 +174,8 @@ dictionary = {"user_id": 1,
         "answer_6": 3,
         "answer_7": 2,
         "answer_8": 1,
-        "answer_9": 7,
-        "answer_10": 5,
-        "answer_11": 1,
-        "answer_12": 2,
-        "answer_13": 3,
-        "answer_14": 1,
-        "answer_15": 1,
-        "answer_16": 1,
-        "answer_17": 4,
-        "answer_18": 6,
-        "answer_19": 1}
+        "answer_9": 4,
+        "answer_10": 2
+        }
 
-print(register_motivation_treatment(json.dumps(dictionary)))"""
+print(register_rosenberg(json.dumps(dictionary)))"""

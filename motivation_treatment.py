@@ -42,8 +42,8 @@ def get_answers(id_user:int)->json:
             cursor.execute(sql, values)
             answers = cursor.fetchone()
             
-            user_id = list(answers)[-1]
-            id_answers = list(answers)[-2]
+            user_id = answers[-1]
+            id_answers = answers[-2]
             
             dictionary_return = question_value(list(answers))
             dictionary_return['info_user'] = {'user_id': user_id,  'id_answers': id_answers}

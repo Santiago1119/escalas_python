@@ -44,7 +44,7 @@ def get_answers(id_user:int)->json:
             dictionary_return['info_user'] = {'user_id': list(answers)[-1],  'id_answers': list(answers)[-2]}
             
             sql_2 = (f"SELECT result FROM result_phq9 WHERE answers_id = %s")
-            values2 = (list(answers)[-2],)
+            values2 = (answers[-2],)
             
             cursor.execute(sql_2, values2)
             result = cursor.fetchone()
