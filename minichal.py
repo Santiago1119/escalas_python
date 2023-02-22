@@ -23,17 +23,17 @@ def get_answers(id_user:int)->json:
         """
         
         response_options = {
-            1: 'Problema pequenio',
-            2: 'Problema moderado',
-            3: 'Problema serio',
-            4: 'Problema grave'
+            0: 'No, absolutamente',
+            1: 'Si, poco',
+            2: 'Si, bastante',
+            3: 'Si, absolutamente'
         } 
         
-        return {i+1: response_options[answers[i]] for i in range(20)}
+        return {i+1: response_options[answers[i]] for i in range(16)}
                 
     with connection_db().cursor() as cursor:
         try:
-            sql = (f"SELECT answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, answer_11, answer_12, answer_13, answer_14, answer_15, answer_16, answer_17, answer_18, answer_19, answer_20, id_answers, user_id FROM answers_paid WHERE user_id = %s")
+            sql = (f"SELECT answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, answer_11, answer_12, answer_13, answer_14, answer_15, answer_16, id_answers, user_id FROM answers_minichal WHERE user_id = %s")
             values = (id_user,)
             
             cursor.execute(sql, values)
@@ -45,7 +45,7 @@ def get_answers(id_user:int)->json:
             dictionary_return = question_value(list(answers))
             dictionary_return['info_user'] = {'user_id': user_id,  'id_answers': id_answers}
             
-            sql2 = (f"SELECT result FROM result_paid WHERE answers_id = %s")
+            sql2 = (f"SELECT result FROM result_minichal WHERE answers_id = %s")
             values2 = (id_answers,)
             
             cursor.execute(sql2, values2)
@@ -53,7 +53,7 @@ def get_answers(id_user:int)->json:
             
             intervention_alert = False
             total_score = int(result[0])        
-            if total_score >= 40 or total_score <= 10:
+            if total_score >= 22:
                 intervention_alert = True
             
             dictionary_return['intervention_alert'] = intervention_alert
@@ -65,7 +65,7 @@ def get_answers(id_user:int)->json:
 
 # print(get_answers(1))
     
-def register_paid(info_user:json)->json:
+def register_minichal(info_user:json)->json:
     """Ingresa en la base de datos la información ingresada en formato json con dos query(SQL) para dos tablas distintas, una almacena el resultado y la otra almacena las respuestas del usuario
 
     Args:
@@ -87,11 +87,8 @@ def register_paid(info_user:json)->json:
         "answer_13": 3,
         "answer_14": 1,
         "answer_15": 1,
-        "answer_16": 1,
-        "answer_17": 4,
-        "answer_18": 2,
-        "answer_19": 1,
-        "answer_20": 4}
+        "answer_16": 1
+        }
         
 
     Returns:
@@ -118,28 +115,24 @@ def register_paid(info_user:json)->json:
             answer_14 = args['answer_14']
             answer_15 = args['answer_15']
             answer_16 = args['answer_16']
-            answer_17 = args['answer_17']
-            answer_18 = args['answer_18']
-            answer_19 = args['answer_19']
-            answer_20 = args['answer_20']
 
                 
-            answers = [answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, answer_11, answer_12, answer_13, answer_14, answer_15, answer_16, answer_17, answer_18, answer_19, answer_20]
-            total_score = sum(answers) * 1.25
+            answers = [answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, answer_11, answer_12, answer_13, answer_14, answer_15, answer_16]
+            total_score = sum(answers)
                 
             intervention_alert = False
             
-            if total_score >= 40 or total_score <= 10:
+            if total_score >= 22:
                 intervention_alert = True
                 
             try:
-                sql = f"INSERT INTO answers_paid (answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, answer_11, answer_12, answer_13, answer_14, answer_15, answer_16, answer_17, answer_18, answer_19, answer_20, user_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-                values = (answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, answer_11, answer_12, answer_13, answer_14, answer_15, answer_16, answer_17, answer_18, answer_19, answer_20, user_id)
+                sql = f"INSERT INTO answers_minichal (answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, answer_11, answer_12, answer_13, answer_14, answer_15, answer_16, user_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+                values = (answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, answer_11, answer_12, answer_13, answer_14, answer_15, answer_16, user_id)
                     
                 cursor.execute(sql, values)
                 answers_id = cursor.lastrowid
                 
-                sql2 = f"INSERT INTO result_paid (result, user_id, answers_id) VALUES (%s, %s, %s)"
+                sql2 = f"INSERT INTO result_minichal (result, user_id, answers_id) VALUES (%s, %s, %s)"
                 values_2 = (total_score, user_id, answers_id)
                 
                 cursor.execute(sql2, values_2)
@@ -164,22 +157,17 @@ def register_paid(info_user:json)->json:
                     "answer_14": answer_14,
                     "answer_15": answer_15,
                     "answer_16": answer_16,
-                    "answer_17": answer_17,
-                    "answer_18": answer_18,
-                    "answer_19": answer_19,
-                    "answer_20": answer_20,
                     "result_test": total_score,
                     "intervention_alert": intervention_alert
                 })
             except Exception as e:
                 return json.dumps({
-                    "message": f"Error al insertar datos en la base de datos {e}"
+                    "message": f"Error al insertar datos en la base de datos: {e}"
                 })
-        
         
 """
 dictionary = {"user_id": 1,
-        "answer_1": 1,
+        "answer_1": 0,
         "answer_2": 3,
         "answer_3": 2,
         "answer_4": 1,
@@ -188,16 +176,13 @@ dictionary = {"user_id": 1,
         "answer_7": 2,
         "answer_8": 1,
         "answer_9": 2,
-        "answer_10": 4,
-        "answer_11": 1,
-        "answer_12": 2,
-        "answer_13": 3,
-        "answer_14": 1,
+        "answer_10": 3,
+        "answer_11": 0,
+        "answer_12": 0,
+        "answer_13": 0,
+        "answer_14": 0,
         "answer_15": 1,
-        "answer_16": 1,
-        "answer_17": 4,
-        "answer_18": 1,
-        "answer_19": 1,
-        "answer_20": 3}
+        "answer_16": 1
+        }
 
-print(register_paid(json.dumps(dictionary)))"""
+print(register_minichal(json.dumps(dictionary)))"""

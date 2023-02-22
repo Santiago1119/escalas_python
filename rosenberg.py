@@ -157,9 +157,9 @@ def register_rosenberg(info_user:json)->json:
                     "result_test": total_score,
                     "intervention_alert": intervention_alert
                 })
-            except:
+            except Exception as e:
                 return json.dumps({
-                    "message": "Error al insertar datos en la base de datos"
+                    "message": f"Error al insertar datos en la base de datos {e}"
                 })
         
         
