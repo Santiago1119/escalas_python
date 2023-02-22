@@ -22,21 +22,32 @@ def get_answers(id_user:int)->json:
             dict: diccionario con el número de la pregunta y lo que respondió
         """
         
-        response_options = {
-            1: 'Desacuerdo fuertemente',
-            2: 'No estoy de acuerdo',
-            3: 'Algo en desacuerdo',
-            4: 'Neutral',
-            5: 'Un poco de acuerdo',
-            6: 'De acuerdo',
-            7: 'Estoy muy de acuerdo'
+        response_options_1 = {
+            1: 'Muy de acuerdo',
+            2: 'De acuerdo',
+            3: 'En desacuerdo',
+            4: 'Muy en desacuerdo',
         } 
         
-        return {i+1: response_options[answers[i]] for i in range(19)}
+        response_options_2 = {
+            1: 'Muy en desacuerdo',
+            2: 'En desacuerdo',
+            3: 'De acuerdo',
+            4: 'Muy de acuerdo',
+        }
+        
+        values_answers = {}
+        desc = {i+1: response_options_2[answers[i]] for i in range(5)}
+        asc = {i+1: response_options_1[answers[i]] for i in range(5, 10)}
+        
+        values_answers.update(desc)
+        values_answers.update(asc)
+        
+        return values_answers
                 
     with connection_db().cursor() as cursor:
         try:
-            sql = (f"SELECT answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, answer_11, answer_12, answer_13, answer_14, answer_15, answer_16, answer_17, answer_18, answer_19, id_answers, user_id FROM answers_motivation_treatment WHERE user_id = %s")
+            sql = (f"SELECT answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, id_answers, user_id FROM answers_rosenberg WHERE user_id = %s")
             values = (id_user,)
             
             cursor.execute(sql, values)
@@ -48,15 +59,16 @@ def get_answers(id_user:int)->json:
             dictionary_return = question_value(list(answers))
             dictionary_return['info_user'] = {'user_id': user_id,  'id_answers': id_answers}
             
-            sql2 = (f"SELECT result FROM result_motivation_treatment WHERE answers_id = %s")
+            sql2 = (f"SELECT result FROM result_rosenberg WHERE answers_id = %s")
             values2 = (id_answers,)
             
             cursor.execute(sql2, values2)
             result = cursor.fetchone()
             
+            
             intervention_alert = False
             total_score = int(result[0])        
-            if total_score >= 68:
+            if total_score >= 30:
                 intervention_alert = True
             
             dictionary_return['intervention_alert'] = intervention_alert
@@ -201,83 +213,3 @@ dictionary = {"user_id": 1,
         "answer_19": 1}
 
 print(register_motivation_treatment(json.dumps(dictionary)))"""
-
-
-def delete_all_motivation_treatment(id_user:int)->json:
-    """Elimina todos los formularios PHQ9 que realizó el usuario
-
-    Args:
-        id_user (int): id del usuario
-
-    Returns:
-        json: mensaje que indica que se eliminó correctamente el usuario de la base de datos o indica error
-    """
-    with connection_db() as conn:
-        with conn.cursor() as cursor:
-    
-            try:
-                sql = f"DELETE FROM result_motivation_treatment WHERE user_id = %s"
-                values = (id_user,)
-                    
-                cursor.execute(sql, values)
-                
-                sql2 = f"DELETE FROM answers_motivation_treatment WHERE user_id = %s"
-                values_2 = (id_user,)
-                
-                cursor.execute(sql2, values_2)
-                
-                conn.commit()
-                    
-                return json.dumps({
-                    "se eliminaron las respuestas del usuario": id_user
-                })
-            except:
-                return json.dumps({
-                    "message": "Error al eliminar datos en la base de datos"
-                })
-
-
-# print(delete_all_motivation_treatment(1))
-
-
-def delete_one_motivation_treatment(info_user:json)->json:
-    
-    args = json.loads(info_user)
-    with connection_db() as conn:
-        with conn.cursor() as cursor:
-            id_user = args['user_id']
-            id_answers = args['id_answers']
-            id_result = args['id_result']
-            
-            try: 
-                sql = f"DELETE FROM result_motivation_treatment WHERE user_id = %s AND id_result = %s"
-                values = (id_user, id_result)
-                
-                    
-                cursor.execute(sql, values)
-                
-                sql_2 = f"DELETE FROM answers_motivation_treatment WHERE user_id = %s AND id_answers = %s"
-                values_2 = (id_user,id_answers)
-                
-                cursor.execute(sql_2, values_2)
-                
-                conn.commit()
-                
-                return json.dumps({
-                    "message": "se eliminaron correctamente los registros y resultados de la escala PHQ9"
-                })
-            
-            except:
-                return json.dumps({
-                    "message": "No se pudieron eliminar los registros y resultados de la escala PHQ9"
-                })
-                
-
-"""
-# parametros delete_one_phq9()
-
-parameters_delete_one_motivation_treatment = {'user_id': 1,
-                                        'id_answers': 7,
-                                        'id_result': 7}
-
-print(delete_one_motivation_treatment(json.dumps(parameters_delete_one_motivation_treatment)))"""

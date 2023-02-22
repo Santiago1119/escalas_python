@@ -59,7 +59,7 @@ def get_answers(id_user:int)->json:
             
             return json.dumps(dictionary_return)
         except Exception as e:
-            return json.dumps({'message': f'Error al guardar los datos: {e}'})
+            return json.dumps({'message': f'Error al consultar los datos: {e}'})
 
 # print(get_answers(5))
     
