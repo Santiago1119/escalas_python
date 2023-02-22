@@ -114,7 +114,7 @@ def register_self_efficacy(info_user:json)->json:
                 })
         
         
-
+"""
 # parametros register_rosenberg()
 dictionary = {"user_id": 3,
         "answer_1": 10,
@@ -123,4 +123,4 @@ dictionary = {"user_id": 3,
         "answer_4": 7
         }
 
-print(register_self_efficacy(json.dumps(dictionary)))
+print(register_self_efficacy(json.dumps(dictionary)))"""
