@@ -38,19 +38,18 @@ def get_answers(id_user:int, date:str)->json:
     with connection_db().cursor() as cursor:
 
         try:
-            sql = (f"SELECT answer_1, answer_2, answer_3, answer_4, answer_5, date, id_answers, doctor_id, user_id FROM answers_who5 WHERE user_id = %s AND date = %s")  
+            sql = (f"SELECT answer_1, answer_2, answer_3, answer_4, answer_5, date, id_answers, doctor_id FROM answers_who5 WHERE user_id = %s AND date = %s")  
             value = (id_user, date)
             
             cursor.execute(sql, value)
             answers = cursor.fetchone()
             
-            user_id = answers[-1]
-            doctor_id = answers[-2]
-            id_answers = answers[-3]
+            doctor_id = answers[-1]
+            id_answers = answers[-2]
             values_answers = answers[0:4]
              
             dictionary_return = question_value(answers)
-            dictionary_return['info_user'] = {'user_id': user_id,  'id_answers': id_answers}
+            dictionary_return['info_user'] = {'user_id': id_user,  'id_answers': id_answers}
             
             sql_2 = (f"SELECT result FROM result_who5 WHERE answers_id = %s")
             values2 = (id_answers,)
@@ -72,7 +71,7 @@ def get_answers(id_user:int, date:str)->json:
         except Exception as e:
             return json.dumps({'message': f'Error al consultar los datos: {e}'})
 
-# print(get_answers(5, '2023-02-23 13:27:19'))
+print(get_answers(5, '2023-02-23 13:27:19'))
     
 def register_who5(info_user:json)->json:
     """Ingresa en la base de datos la información ingresada en formato json con dos query(SQL) para dos tablas distintas, una almacena el resultado y la otra almacena las respuestas del usuario

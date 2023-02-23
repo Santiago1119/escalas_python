@@ -35,18 +35,17 @@ def get_answers(id_user:int, date:str)->json:
                 
     with connection_db().cursor() as cursor:
         try:
-            sql = (f"SELECT answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, answer_11, answer_12, answer_13, answer_14, answer_15, answer_16, answer_17, answer_18, answer_19, answer_20, date, id_answers, doctor_id, user_id FROM answers_paid WHERE user_id = %s AND date = %s")
+            sql = (f"SELECT answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, answer_11, answer_12, answer_13, answer_14, answer_15, answer_16, answer_17, answer_18, answer_19, answer_20, date, id_answers, doctor_id FROM answers_paid WHERE user_id = %s AND date = %s")
             values = (id_user, date)
             
             cursor.execute(sql, values)
             answers = cursor.fetchone()
             
-            user_id = answers[-1]
-            doctor_id = answers[-2]
-            id_answers = answers[-3]
+            doctor_id = answers[-1]
+            id_answers = answers[-2]
             
             dictionary_return = question_value(list(answers))
-            dictionary_return['info_user'] = {'user_id': user_id,  'id_answers': id_answers}
+            dictionary_return['info_user'] = {'user_id': id_user,  'id_answers': id_answers}
             
             sql2 = (f"SELECT result FROM result_paid WHERE answers_id = %s")
             values2 = (id_answers,)
@@ -68,7 +67,7 @@ def get_answers(id_user:int, date:str)->json:
         except Exception as e:
             return json.dumps({'message': f'Error al consultar los datos: {e}'})
 
-# print(get_answers(1, "2023-02-23 11:56:26"))
+print(get_answers(1, "2023-02-23 11:56:26"))
     
 def register_paid(info_user:json)->json:
     """Ingresa en la base de datos la información ingresada en formato json con dos query(SQL) para dos tablas distintas, una almacena el resultado y la otra almacena las respuestas del usuario
