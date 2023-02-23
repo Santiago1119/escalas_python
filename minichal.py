@@ -1,8 +1,10 @@
 import pymysql
 import json
 from connection_db import connection_db
+from datetime import datetime, date
+from dateutil import tz
 
-def get_answers(id_user:int)->json:
+def get_answers(id_user:int, date:str)->json:
     """Consulta las respuestas del usuario en la base de datos
 
     Args:
@@ -33,14 +35,15 @@ def get_answers(id_user:int)->json:
                 
     with connection_db().cursor() as cursor:
         try:
-            sql = (f"SELECT answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, answer_11, answer_12, answer_13, answer_14, answer_15, answer_16, id_answers, user_id FROM answers_minichal WHERE user_id = %s")
-            values = (id_user,)
+            sql = (f"SELECT answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, answer_11, answer_12, answer_13, answer_14, answer_15, answer_16, date, id_answers, doctor_id, user_id FROM answers_minichal WHERE user_id = %s AND date = %s")
+            values = (id_user,date)
             
             cursor.execute(sql, values)
             answers = cursor.fetchone()
             
             user_id = answers[-1]
-            id_answers = answers[-2]
+            doctor_id = answers[-2]
+            id_answers = answers[-3]
             
             dictionary_return = question_value(list(answers))
             dictionary_return['info_user'] = {'user_id': user_id,  'id_answers': id_answers}
@@ -57,13 +60,15 @@ def get_answers(id_user:int)->json:
                 intervention_alert = True
             
             dictionary_return['intervention_alert'] = intervention_alert
-            
+            dictionary_return['doctor_id'] = doctor_id    
+            dictionary_return['date'] = date
+                       
             return json.dumps(dictionary_return)
         
         except Exception as e:
             return json.dumps({'message': f'Error al consultar los datos: {e}'})
 
-# print(get_answers(1))
+# print(get_answers(1, '2023-02-23 12:16:28'))
     
 def register_minichal(info_user:json)->json:
     """Ingresa en la base de datos la información ingresada en formato json con dos query(SQL) para dos tablas distintas, una almacena el resultado y la otra almacena las respuestas del usuario
@@ -72,6 +77,7 @@ def register_minichal(info_user:json)->json:
         dictionary (json): archivo json con la siguiente estructura: 
         
         {"user_id": 8,
+        "doctor_id": 1,
         "answer_1": 1,
         "answer_2": 3,
         "answer_3": 2,
@@ -99,6 +105,7 @@ def register_minichal(info_user:json)->json:
         with conn.cursor() as cursor:
             
             user_id = args['user_id']
+            doctor_id = args['doctor_id']
             answer_1 = args['answer_1']
             answer_2 = args['answer_2']
             answer_3 = args['answer_3']
@@ -115,7 +122,6 @@ def register_minichal(info_user:json)->json:
             answer_14 = args['answer_14']
             answer_15 = args['answer_15']
             answer_16 = args['answer_16']
-
                 
             answers = [answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, answer_11, answer_12, answer_13, answer_14, answer_15, answer_16]
             total_score = sum(answers)
@@ -124,10 +130,17 @@ def register_minichal(info_user:json)->json:
             
             if total_score >= 22:
                 intervention_alert = True
-                
+            
+            from_zone = tz.gettz('UTC')
+            to_zone = tz.gettz('America/Bogota')
+            date = datetime.utcnow()
+            date = date.replace(tzinfo=from_zone)
+            date = date.astimezone(to_zone)
+            date = date.strftime("%Y-%m-%d %H:%M:%S")
+            
             try:
-                sql = f"INSERT INTO answers_minichal (answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, answer_11, answer_12, answer_13, answer_14, answer_15, answer_16, user_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-                values = (answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, answer_11, answer_12, answer_13, answer_14, answer_15, answer_16, user_id)
+                sql = f"INSERT INTO answers_minichal (answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, answer_11, answer_12, answer_13, answer_14, answer_15, answer_16, date, doctor_id, user_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+                values = (answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, answer_11, answer_12, answer_13, answer_14, answer_15, answer_16, date, doctor_id, user_id)
                     
                 cursor.execute(sql, values)
                 answers_id = cursor.lastrowid
@@ -157,6 +170,8 @@ def register_minichal(info_user:json)->json:
                     "answer_14": answer_14,
                     "answer_15": answer_15,
                     "answer_16": answer_16,
+                    "doctor_id": doctor_id,
+                    "date": date,
                     "result_test": total_score,
                     "intervention_alert": intervention_alert
                 })
@@ -167,6 +182,7 @@ def register_minichal(info_user:json)->json:
         
 """
 dictionary = {"user_id": 1,
+        "doctor_id": 1,
         "answer_1": 0,
         "answer_2": 3,
         "answer_3": 2,

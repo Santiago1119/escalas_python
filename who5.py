@@ -24,67 +24,57 @@ def get_answers(id_user:int, date:str)->json:
             dict: diccionario con el número de la pregunta y lo que respondió
         """
         
-        response_options_1 = {
-            1: 'Muy de acuerdo',
-            2: 'De acuerdo',
-            3: 'En desacuerdo',
-            4: 'Muy en desacuerdo',
-        } 
-        
-        response_options_2 = {
-            1: 'Muy en desacuerdo',
-            2: 'En desacuerdo',
-            3: 'De acuerdo',
-            4: 'Muy de acuerdo',
+        response_options = {
+            0: 'Nunca',
+            1: 'De vez en cuando',
+            2: 'Menos de la mitad del tiempo',
+            3: 'Mas de la mitad del tiempo',
+            4: 'La mayor parte del tiempo',
+            5: 'Todo el tiempo'
         }
-        
-        values_answers = {}
-        desc = {i+1: response_options_2[answers[i]] for i in range(5)}
-        asc = {i+1: response_options_1[answers[i]] for i in range(5, 10)}
-        
-        values_answers.update(desc)
-        values_answers.update(asc)
-        
-        return values_answers
+
+        return {i+1: response_options[answers[i]] for i in range(5)}
                 
     with connection_db().cursor() as cursor:
+
         try:
-            sql = (f"SELECT answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, date, id_answers, doctor_id, user_id FROM answers_rosenberg WHERE user_id = %s AND date = %s")
-            values = (id_user, date)
+            sql = (f"SELECT answer_1, answer_2, answer_3, answer_4, answer_5, date, id_answers, doctor_id, user_id FROM answers_who5 WHERE user_id = %s AND date = %s")  
+            value = (id_user, date)
             
-            cursor.execute(sql, values)
+            cursor.execute(sql, value)
             answers = cursor.fetchone()
             
             user_id = answers[-1]
             doctor_id = answers[-2]
             id_answers = answers[-3]
-            
+            values_answers = answers[0:4]
+             
             dictionary_return = question_value(answers)
             dictionary_return['info_user'] = {'user_id': user_id,  'id_answers': id_answers}
             
-            sql2 = (f"SELECT result FROM result_rosenberg WHERE answers_id = %s")
+            sql_2 = (f"SELECT result FROM result_who5 WHERE answers_id = %s")
             values2 = (id_answers,)
             
-            cursor.execute(sql2, values2)
+            cursor.execute(sql_2, values2)
             result = cursor.fetchone()
             
+            total_score = int(result[0])
             intervention_alert = False
-            total_score = int(result[0])        
-            if total_score >= 30:
+            
+            if total_score <= 13 or 0 in values_answers or 1 in values_answers:
                 intervention_alert = True
             
             dictionary_return['intervention_alert'] = intervention_alert
             dictionary_return['doctor_id'] = doctor_id    
-            dictionary_return['date'] = date 
+            dictionary_return['date'] = date
             
             return json.dumps(dictionary_return)
-        
         except Exception as e:
             return json.dumps({'message': f'Error al consultar los datos: {e}'})
 
-# print(get_answers(1, '2023-02-23 11:04:04'))
+# print(get_answers(5, '2023-02-23 13:27:19'))
     
-def register_rosenberg(info_user:json)->json:
+def register_who5(info_user:json)->json:
     """Ingresa en la base de datos la información ingresada en formato json con dos query(SQL) para dos tablas distintas, una almacena el resultado y la otra almacena las respuestas del usuario
 
     Args:
@@ -92,21 +82,16 @@ def register_rosenberg(info_user:json)->json:
         
         {"user_id": 8,
         "doctor_id": 1,
-        "answer_1": 1,
-        "answer_2": 3,
-        "answer_3": 2,
-        "answer_4": 1,
-        "answer_5": 2,
-        "answer_6": 3,
-        "answer_7": 2,
-        "answer_8": 1,
-        "answer_9": 7,
-        "answer_10": 5
+        "answer_1": 2,
+        "answer_2": 4,
+        "answer_3": 5,
+        "answer_4": 5,
+        "answer_5": 0
         }
         
 
     Returns:
-        json: json con la información ingresada a la base de datos
+        json: json con la información
     """
     args = json.loads(info_user)
     with connection_db() as conn:
@@ -119,21 +104,15 @@ def register_rosenberg(info_user:json)->json:
             answer_3 = args['answer_3']
             answer_4 = args['answer_4']
             answer_5 = args['answer_5']
-            answer_6 = args['answer_6']
-            answer_7 = args['answer_7']
-            answer_8 = args['answer_8']
-            answer_9 = args['answer_9']
-            answer_10 = args['answer_10']
-
                 
-            answers = [answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10]
-            total_score = sum(answers)
-                
+            answers = [answer_1, answer_2, answer_3, answer_4, answer_5]
+            total_score = sum(answers) * 4
+            
             intervention_alert = False
             
-            if total_score <= 30:
+            if total_score <= 13 or 0 in answers or 1 in answers:
                 intervention_alert = True
-                
+            
             from_zone = tz.gettz('UTC')
             to_zone = tz.gettz('America/Bogota')
             date = datetime.utcnow()
@@ -142,18 +121,18 @@ def register_rosenberg(info_user:json)->json:
             date = date.strftime("%Y-%m-%d %H:%M:%S")
             
             try:
-                sql = f"INSERT INTO answers_rosenberg (answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, date, doctor_id, user_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-                values = (answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, date, doctor_id, user_id)
+                sql = f"INSERT INTO answers_who5 (answer_1, answer_2, answer_3, answer_4, answer_5, date, doctor_id, user_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+                values = (answer_1, answer_2, answer_3, answer_4, answer_5, date, doctor_id, user_id)
                     
                 cursor.execute(sql, values)
-                answers_id = cursor.lastrowid
+                answers_phq9_id = cursor.lastrowid
                 
-                sql2 = f"INSERT INTO result_rosenberg (result, user_id, answers_id) VALUES (%s, %s, %s)"
-                values_2 = (total_score, user_id, answers_id)
+                sql_2 = f"INSERT INTO result_who5 (result, user_id, answers_id) VALUES (%s, %s, %s)"
+                values_2 = (total_score, user_id, answers_phq9_id)
                 
-                cursor.execute(sql2, values_2)
-                
+                cursor.execute(sql_2, values_2) 
                 conn.commit()
+                
                     
                 return json.dumps({
                     "id_user": user_id,
@@ -162,35 +141,24 @@ def register_rosenberg(info_user:json)->json:
                     "answer_3": answer_3,
                     "answer_4": answer_4,
                     "answer_5": answer_5,
-                    "answer_6": answer_6,
-                    "answer_7": answer_7,
-                    "answer_8": answer_8,
-                    "answer_9": answer_9,
-                    "answer_10": answer_10,
-                    "result_test": total_score,
-                    "date": date,
                     "doctor_id": doctor_id,
+                    "date": date,
+                    "result_test": total_score,
                     "intervention_alert": intervention_alert
                 })
             except Exception as e:
                 return json.dumps({
-                    "message": f"Error al insertar datos en la base de datos {e}"
+                    "message": f"Error al insertar datos en la base de datos: {e}"
                 })
-        
         
 """
 dictionary = {"user_id": 5,
         "doctor_id": 1,
-        "answer_1": 1,
-        "answer_2": 3,
-        "answer_3": 2,
-        "answer_4": 1,
-        "answer_5": 2,
-        "answer_6": 3,
-        "answer_7": 2,
-        "answer_8": 1,
-        "answer_9": 4,
-        "answer_10": 2
+        "answer_1": 2,
+        "answer_2": 4,
+        "answer_3": 3,
+        "answer_4": 4,
+        "answer_5": 5
         }
 
-print(register_rosenberg(json.dumps(dictionary)))"""
+print(register_who5(json.dumps(dictionary)))"""
