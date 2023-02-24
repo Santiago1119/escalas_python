@@ -67,7 +67,7 @@ def get_answers(id_user:int, date:str)->json:
         except Exception as e:
             return json.dumps({'message': f'Error al consultar los datos: {e}'})
 
-print(get_answers(1, '2023-02-23 12:16:28'))
+# print(get_answers(1, '2023-02-23 12:16:28'))
     
 def register_minichal(info_user:json)->json:
     """Ingresa en la base de datos la información ingresada en formato json con dos query(SQL) para dos tablas distintas, una almacena el resultado y la otra almacena las respuestas del usuario

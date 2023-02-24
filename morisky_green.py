@@ -97,10 +97,10 @@ def register_who5(info_user:json)->json:
                 values = (answer_1, answer_2, answer_3, answer_4, date, doctor_id, user_id)
                     
                 cursor.execute(sql, values)
-                answers_phq9_id = cursor.lastrowid
+                answers_id = cursor.lastrowid
                 
                 sql_2 = f"INSERT INTO result_morisky_green (result, user_id, answers_id) VALUES (%s, %s, %s)"
-                values_2 = (intervention_alert, user_id, answers_phq9_id)
+                values_2 = (intervention_alert, user_id, answers_id)
                 
                 cursor.execute(sql_2, values_2) 
                 conn.commit()

@@ -25,20 +25,19 @@ def get_answers(id_user:int, date:str)->json:
         """
         
         response_options = {
-            0: 'Nunca',
-            1: 'De vez en cuando',
-            2: 'Menos de la mitad del tiempo',
-            3: 'Mas de la mitad del tiempo',
-            4: 'La mayor parte del tiempo',
-            5: 'Todo el tiempo'
+            1: 'Totalmente en desacuerdo',
+            2: 'En desacuerdo',
+            3: 'Ni de acuerdo ni en desacuerdo',
+            4: 'De acuerdo',
+            5: 'Totalmente de acuerdo'
         }
 
-        return {i+1: response_options[answers[i]] for i in range(5)}
+        return {i+1: response_options[answers[i]] for i in range(10)}
                 
     with connection_db().cursor() as cursor:
 
         try:
-            sql = (f"SELECT answer_1, answer_2, answer_3, answer_4, answer_5, date, id_answers, doctor_id FROM answers_who5 WHERE user_id = %s AND date = %s")  
+            sql = (f"SELECT answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, date, id_answers, doctor_id FROM answers_bmq WHERE user_id = %s AND date = %s")  
             value = (id_user, date)
             
             cursor.execute(sql, value)
@@ -46,21 +45,22 @@ def get_answers(id_user:int, date:str)->json:
             
             doctor_id = answers[-1]
             id_answers = answers[-2]
-            values_answers = answers[0:4]
-             
+            
             dictionary_return = question_value(answers)
             dictionary_return['info_user'] = {'user_id': id_user,  'id_answers': id_answers}
             
-            sql_2 = (f"SELECT result FROM result_who5 WHERE answers_id = %s")
+            sql_2 = (f"SELECT need_items, preocupation_items FROM result_bmq WHERE answers_id = %s")
             values2 = (id_answers,)
             
             cursor.execute(sql_2, values2)
             result = cursor.fetchone()
             
-            total_score = int(result[0])
+            need_items = result[-2]
+            preocupation_items = result[-1]
+            
             intervention_alert = False
             
-            if total_score <= 13 or 0 in values_answers or 1 in values_answers:
+            if need_items >= 13 or preocupation_items >= 13:
                 intervention_alert = True
             
             dictionary_return['intervention_alert'] = intervention_alert
@@ -71,21 +71,26 @@ def get_answers(id_user:int, date:str)->json:
         except Exception as e:
             return json.dumps({'message': f'Error al consultar los datos: {e}'})
 
-print(get_answers(5, '2023-02-23 13:27:19'))
+# print(get_answers(5, '2023-02-23 21:30:00'))
     
-def register_who5(info_user:json)->json:
+def register_phq9(info_user:json)->json:
     """Ingresa en la base de datos la información ingresada en formato json con dos query(SQL) para dos tablas distintas, una almacena el resultado y la otra almacena las respuestas del usuario
 
     Args:
         dictionary (json): archivo json con la siguiente estructura: 
         
-        {"user_id": 8,
+        {"user_id": 1,
         "doctor_id": 1,
-        "answer_1": 2,
-        "answer_2": 4,
-        "answer_3": 5,
-        "answer_4": 5,
-        "answer_5": 0
+        "answer_1": 3,
+        "answer_2": 3,
+        "answer_3": 2,
+        "answer_4": 1,
+        "answer_5": 2,
+        "answer_6": 1,
+        "answer_7": 2,
+        "answer_8": 3,
+        "answer_9": 4,
+        "answer_10": 5
         }
         
 
@@ -103,13 +108,21 @@ def register_who5(info_user:json)->json:
             answer_3 = args['answer_3']
             answer_4 = args['answer_4']
             answer_5 = args['answer_5']
-                
-            answers = [answer_1, answer_2, answer_3, answer_4, answer_5]
-            total_score = sum(answers) * 4
+            answer_6 = args['answer_6']
+            answer_7 = args['answer_7']
+            answer_8 = args['answer_8']
+            answer_9 = args['answer_9']
+            answer_10 = args['answer_10']
+                 
+            need_items = [answer_1, answer_3, answer_5, answer_7, answer_10]
+            preocupation_items = [answer_2, answer_4, answer_6, answer_8, answer_9]
+            
+            need_items_sumatory = sum(need_items)
+            preocupation_items_sumatory = sum(preocupation_items)
             
             intervention_alert = False
             
-            if total_score <= 13 or 0 in answers or 1 in answers:
+            if need_items_sumatory >= 13 or preocupation_items_sumatory >= 13:
                 intervention_alert = True
             
             from_zone = tz.gettz('UTC')
@@ -120,14 +133,14 @@ def register_who5(info_user:json)->json:
             date = date.strftime("%Y-%m-%d %H:%M:%S")
             
             try:
-                sql = f"INSERT INTO answers_who5 (answer_1, answer_2, answer_3, answer_4, answer_5, date, doctor_id, user_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
-                values = (answer_1, answer_2, answer_3, answer_4, answer_5, date, doctor_id, user_id)
+                sql = f"INSERT INTO answers_bmq (answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, date, doctor_id, user_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+                values = (answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, date, doctor_id, user_id)
                     
                 cursor.execute(sql, values)
                 answers_id = cursor.lastrowid
                 
-                sql_2 = f"INSERT INTO result_who5 (result, user_id, answers_id) VALUES (%s, %s, %s)"
-                values_2 = (total_score, user_id, answers_id)
+                sql_2 = f"INSERT INTO result_bmq (need_items, preocupation_items, user_id, answers_id) VALUES (%s, %s, %s, %s)"
+                values_2 = (need_items_sumatory, preocupation_items_sumatory ,user_id, answers_id)
                 
                 cursor.execute(sql_2, values_2) 
                 conn.commit()
@@ -140,9 +153,15 @@ def register_who5(info_user:json)->json:
                     "answer_3": answer_3,
                     "answer_4": answer_4,
                     "answer_5": answer_5,
+                    "answer_6": answer_6,
+                    "answer_7": answer_7,
+                    "answer_8": answer_8,
+                    "answer_9": answer_9,
+                    "answer_10": answer_10,
                     "doctor_id": doctor_id,
+                    "need_items": need_items_sumatory,
+                    "preocupation_items": preocupation_items_sumatory,
                     "date": date,
-                    "result_test": total_score,
                     "intervention_alert": intervention_alert
                 })
             except Exception as e:
@@ -153,11 +172,16 @@ def register_who5(info_user:json)->json:
 """
 dictionary = {"user_id": 5,
         "doctor_id": 1,
-        "answer_1": 2,
-        "answer_2": 4,
-        "answer_3": 3,
-        "answer_4": 4,
-        "answer_5": 5
+        "answer_1": 1,
+        "answer_2": 3,
+        "answer_3": 2,
+        "answer_4": 1,
+        "answer_5": 2,
+        "answer_6": 3,
+        "answer_7": 2,
+        "answer_8": 1,
+        "answer_9": 3,
+        "answer_10": 5
         }
 
-print(register_who5(json.dumps(dictionary)))"""
+print(register_phq9(json.dumps(dictionary)))"""

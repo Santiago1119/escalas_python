@@ -44,7 +44,7 @@ def get_answers(id_user:int, date:str)->json:
             
             doctor_id = answers[-1]
             id_answers = answers[-2]
-             
+            
             dictionary_return = question_value(answers)
             dictionary_return['info_user'] = {'user_id': id_user,  'id_answers': id_answers}
             
@@ -108,8 +108,7 @@ def register_phq9(info_user:json)->json:
             answer_7 = args['answer_7']
             answer_8 = args['answer_8']
             answer_9 = args['answer_9']
-                
-                
+                 
             answers = [answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9]
             total_score = sum(answers)
             
@@ -130,10 +129,10 @@ def register_phq9(info_user:json)->json:
                 values = (answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, date, doctor_id, user_id)
                     
                 cursor.execute(sql, values)
-                answers_phq9_id = cursor.lastrowid
+                answers_id = cursor.lastrowid
                 
                 sql_2 = f"INSERT INTO result_phq9 (result, user_id, answers_id) VALUES (%s, %s, %s)"
-                values_2 = (total_score, user_id, answers_phq9_id)
+                values_2 = (total_score, user_id, answers_id)
                 
                 cursor.execute(sql_2, values_2) 
                 conn.commit()
