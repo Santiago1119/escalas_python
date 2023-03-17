@@ -36,7 +36,9 @@ def get_answers(id_user:int)->json:
                 
     with connection_db().cursor() as cursor:
         try:
-            sql = (f"SELECT answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, answer_11, answer_12, answer_13, answer_14, answer_15, answer_16, answer_17, answer_18, answer_19, id_answers, user_id FROM answers_motivation_treatment WHERE user_id = %s")
+            sql = ("""
+                SELECT answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, answer_11, answer_12, answer_13, answer_14, answer_15, answer_16, answer_17, answer_18, answer_19, id_answers, user_id FROM answers_motivation_treatment 
+                WHERE user_id = %s""")
             values = (id_user,)
             
             cursor.execute(sql, values)
@@ -134,7 +136,29 @@ def register_motivation_treatment(info_user:json)->json:
                 intervention_alert = True
                 
             try:
-                sql = f"INSERT INTO answers_motivation_treatment (answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, answer_11, answer_12, answer_13, answer_14, answer_15, answer_16, answer_17, answer_18, answer_19, user_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+                sql = f"""
+                    INSERT INTO answers_motivation_treatment (
+                        answer_1,
+                        answer_2,
+                        answer_3,
+                        answer_4,
+                        answer_5,
+                        answer_6,
+                        answer_7,
+                        answer_8,
+                        answer_9,
+                        answer_10,
+                        answer_11,
+                        answer_12,
+                        answer_13,
+                        answer_14,
+                        answer_15, 
+                        answer_16,
+                        answer_17,
+                        answer_18,
+                        answer_19,
+                        user_id)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);"""
                 values = (answer_1, answer_2, answer_3, answer_4, answer_5, answer_6, answer_7, answer_8, answer_9, answer_10, answer_11, answer_12, answer_13, answer_14, answer_15, answer_16, answer_17, answer_18, answer_19, user_id)
                     
                 cursor.execute(sql, values)
@@ -201,83 +225,3 @@ dictionary = {"user_id": 1,
         "answer_19": 1}
 
 print(register_motivation_treatment(json.dumps(dictionary)))"""
-
-
-def delete_all_motivation_treatment(id_user:int)->json:
-    """Elimina todos los formularios PHQ9 que realizó el usuario
-
-    Args:
-        id_user (int): id del usuario
-
-    Returns:
-        json: mensaje que indica que se eliminó correctamente el usuario de la base de datos o indica error
-    """
-    with connection_db() as conn:
-        with conn.cursor() as cursor:
-    
-            try:
-                sql = f"DELETE FROM result_motivation_treatment WHERE user_id = %s"
-                values = (id_user,)
-                    
-                cursor.execute(sql, values)
-                
-                sql2 = f"DELETE FROM answers_motivation_treatment WHERE user_id = %s"
-                values_2 = (id_user,)
-                
-                cursor.execute(sql2, values_2)
-                
-                conn.commit()
-                    
-                return json.dumps({
-                    "se eliminaron las respuestas del usuario": id_user
-                })
-            except:
-                return json.dumps({
-                    "message": "Error al eliminar datos en la base de datos"
-                })
-
-
-# print(delete_all_motivation_treatment(1))
-
-
-def delete_one_motivation_treatment(info_user:json)->json:
-    
-    args = json.loads(info_user)
-    with connection_db() as conn:
-        with conn.cursor() as cursor:
-            id_user = args['user_id']
-            id_answers = args['id_answers']
-            id_result = args['id_result']
-            
-            try: 
-                sql = f"DELETE FROM result_motivation_treatment WHERE user_id = %s AND id_result = %s"
-                values = (id_user, id_result)
-                
-                    
-                cursor.execute(sql, values)
-                
-                sql_2 = f"DELETE FROM answers_motivation_treatment WHERE user_id = %s AND id_answers = %s"
-                values_2 = (id_user,id_answers)
-                
-                cursor.execute(sql_2, values_2)
-                
-                conn.commit()
-                
-                return json.dumps({
-                    "message": "se eliminaron correctamente los registros y resultados de la escala PHQ9"
-                })
-            
-            except:
-                return json.dumps({
-                    "message": "No se pudieron eliminar los registros y resultados de la escala PHQ9"
-                })
-                
-
-"""
-# parametros delete_one_phq9()
-
-parameters_delete_one_motivation_treatment = {'user_id': 1,
-                                        'id_answers': 7,
-                                        'id_result': 7}
-
-print(delete_one_motivation_treatment(json.dumps(parameters_delete_one_motivation_treatment)))"""
